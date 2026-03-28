@@ -1,0 +1,21 @@
+# Version control
+.git
+.gitignore
+
+# Local env files
+.env
+.env.*
+!.env.example
+
+# Dev dependencies / build output (rebuilt inside container)
+node_modules
+dist
+coverage
+
+# Logs
+npm-debug.log*
+
+# Editor / OS
+.vscode
+.idea
+*.DS_Store
