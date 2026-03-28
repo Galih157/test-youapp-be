@@ -22,12 +22,12 @@ describe('LoginController', () => {
   describe('login', () => {
     it('should call LoginService.login and return the result', async () => {
       const dto = { email: 'test@example.com', password: 'password123' };
-      mockLoginService.login.mockResolvedValue({ access_token: 'token' });
+      mockLoginService.login.mockResolvedValue({ accessToken: 'token' });
 
       const result = await controller.login(dto);
 
       expect(mockLoginService.login).toHaveBeenCalledWith(dto);
-      expect(result).toEqual({ access_token: 'token' });
+      expect(result).toEqual({ accessToken: 'token' });
     });
   });
 });

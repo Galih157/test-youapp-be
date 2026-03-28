@@ -43,7 +43,7 @@ describe('LoginService', () => {
   });
 
   describe('login', () => {
-    it('should return an access_token on valid credentials', async () => {
+    it('should return an accessToken on valid credentials', async () => {
       const selectMock = jest.fn().mockResolvedValue(mockUser);
       mockUserModel.findOne.mockReturnValue({ select: selectMock });
       (bcrypt.compare as jest.Mock).mockResolvedValue(true);
@@ -61,7 +61,7 @@ describe('LoginService', () => {
         sub: mockUser._id,
         email: mockUser.email,
       });
-      expect(result).toEqual({ access_token: 'signed.jwt.token' });
+      expect(result).toEqual({ accessToken: 'signed.jwt.token' });
     });
 
     it('should throw UnauthorizedException when user is not found', async () => {
