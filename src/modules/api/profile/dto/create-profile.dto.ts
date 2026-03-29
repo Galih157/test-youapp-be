@@ -1,20 +1,22 @@
 import {
   IsArray,
   IsDateString,
+  IsEnum,
   IsNumber,
   IsOptional,
   IsString,
   Min,
 } from 'class-validator';
+import { Gender } from '../../../../enums/gender.enum';
 
 export class CreateProfileDto {
   @IsString()
   @IsOptional()
   displayName?: string;
 
-  @IsString()
+  @IsEnum(Gender)
   @IsOptional()
-  gender?: string;
+  gender?: Gender;
 
   @IsDateString()
   @IsOptional()

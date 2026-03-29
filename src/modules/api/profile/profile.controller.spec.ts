@@ -2,6 +2,8 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { ProfileController } from './profile.controller';
 import { ProfileService } from './profile.service';
 import { JwtAuthGuard } from '../../../utils/jwt-auth.guard';
+import { Gender } from '../../../enums/gender.enum';
+import { ProfileViewModel } from './viewmodels/profile.viewmodel';
 
 const mockProfileService = {
   createProfile: jest.fn(),
@@ -30,52 +32,90 @@ describe('ProfileController', () => {
   });
 
   describe('createProfile', () => {
-    it('should call ProfileService.createProfile and return result', async () => {
+    it('should return a ProfileViewModel mapped from the service result', async () => {
       const dto = { displayName: 'Test User', height: 175, weight: 70 };
-      const profile = { _id: 'profile-id', userId: mockReq.user.sub, ...dto };
-      mockProfileService.createProfile.mockResolvedValue(profile);
+      const doc = {
+        _id: 'profile-id',
+        userId: mockReq.user.sub,
+        __v: 0,
+        displayName: 'Test User',
+        gender: Gender.Male,
+        birthday: new Date('1990-06-15'),
+        horoscope: 'Gemini',
+        zodiac: 'Horse',
+        height: 175,
+        weight: 70,
+        interests: ['coding'],
+      };
+      mockProfileService.createProfile.mockResolvedValue(doc);
 
       const result = await controller.createProfile(mockReq, dto);
 
-      expect(mockProfileService.createProfile).toHaveBeenCalledWith(
-        mockReq.user.sub,
-        dto,
+      expect(mockProfileService.createProfile).toHaveBeenCalledWith(mockReq.user.sub, dto);
+      expect(result).toBeInstanceOf(ProfileViewModel);
+      expect(result).toEqual(
+        expect.objectContaining({
+          displayName: 'Test User',
+          gender: Gender.Male,
+          birthday: '1990-06-15',
+          horoscope: 'Gemini',
+          zodiac: 'Horse',
+          height: 175,
+          weight: 70,
+          interests: ['coding'],
+        }),
       );
-      expect(result).toEqual(profile);
+      expect((result as any)._id).toBeUndefined();
+      expect((result as any).userId).toBeUndefined();
+      expect((result as any).__v).toBeUndefined();
     });
   });
 
   describe('getProfile', () => {
-    it('should call ProfileService.getProfile and return result', async () => {
-      const profile = {
+    it('should return a ProfileViewModel mapped from the service result', async () => {
+      const doc = {
         _id: 'profile-id',
         userId: mockReq.user.sub,
+        __v: 0,
         displayName: 'Test User',
+        interests: [],
       };
-      mockProfileService.getProfile.mockResolvedValue(profile);
+      mockProfileService.getProfile.mockResolvedValue(doc);
 
       const result = await controller.getProfile(mockReq);
 
-      expect(mockProfileService.getProfile).toHaveBeenCalledWith(
-        mockReq.user.sub,
+      expect(mockProfileService.getProfile).toHaveBeenCalledWith(mockReq.user.sub);
+      expect(result).toBeInstanceOf(ProfileViewModel);
+      expect(result).toEqual(
+        expect.objectContaining({ displayName: 'Test User', interests: [] }),
       );
-      expect(result).toEqual(profile);
+      expect((result as any)._id).toBeUndefined();
+      expect((result as any).userId).toBeUndefined();
     });
   });
 
   describe('updateProfile', () => {
-    it('should call ProfileService.updateProfile and return result', async () => {
+    it('should return a ProfileViewModel mapped from the service result', async () => {
       const dto = { displayName: 'Updated Name', height: 180 };
-      const updated = { _id: 'profile-id', userId: mockReq.user.sub, ...dto };
-      mockProfileService.updateProfile.mockResolvedValue(updated);
+      const doc = {
+        _id: 'profile-id',
+        userId: mockReq.user.sub,
+        __v: 0,
+        displayName: 'Updated Name',
+        height: 180,
+        interests: [],
+      };
+      mockProfileService.updateProfile.mockResolvedValue(doc);
 
       const result = await controller.updateProfile(mockReq, dto);
 
-      expect(mockProfileService.updateProfile).toHaveBeenCalledWith(
-        mockReq.user.sub,
-        dto,
+      expect(mockProfileService.updateProfile).toHaveBeenCalledWith(mockReq.user.sub, dto);
+      expect(result).toBeInstanceOf(ProfileViewModel);
+      expect(result).toEqual(
+        expect.objectContaining({ displayName: 'Updated Name', height: 180 }),
       );
-      expect(result).toEqual(updated);
+      expect((result as any)._id).toBeUndefined();
+      expect((result as any).userId).toBeUndefined();
     });
   });
 });

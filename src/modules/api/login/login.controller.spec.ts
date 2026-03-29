@@ -21,7 +21,7 @@ describe('LoginController', () => {
 
   describe('login', () => {
     it('should call LoginService.login and return the result', async () => {
-      const dto = { email: 'test@example.com', password: 'password123' };
+      const dto = { identifier: 'testuser', password: 'password123' };
       mockLoginService.login.mockResolvedValue({ accessToken: 'token' });
 
       const result = await controller.login(dto);

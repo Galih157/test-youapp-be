@@ -43,18 +43,20 @@ describe('LoginService', () => {
   });
 
   describe('login', () => {
-    it('should return an accessToken on valid credentials', async () => {
+    it('should return an accessToken when identifier is an email', async () => {
       const selectMock = jest.fn().mockResolvedValue(mockUser);
       mockUserModel.findOne.mockReturnValue({ select: selectMock });
       (bcrypt.compare as jest.Mock).mockResolvedValue(true);
       mockJwtService.sign.mockReturnValue('signed.jwt.token');
 
       const result = await service.login({
-        email: 'test@example.com',
+        identifier: 'test@example.com',
         password: 'plaintext_password',
       });
 
-      expect(mockUserModel.findOne).toHaveBeenCalledWith({ email: 'test@example.com' });
+      expect(mockUserModel.findOne).toHaveBeenCalledWith({
+        $or: [{ email: 'test@example.com' }, { username: 'test@example.com' }],
+      });
       expect(selectMock).toHaveBeenCalledWith('+password');
       expect(bcrypt.compare).toHaveBeenCalledWith('plaintext_password', mockUser.password);
       expect(mockJwtService.sign).toHaveBeenCalledWith({
@@ -64,12 +66,29 @@ describe('LoginService', () => {
       expect(result).toEqual({ accessToken: 'signed.jwt.token' });
     });
 
+    it('should return an accessToken when identifier is a username', async () => {
+      const selectMock = jest.fn().mockResolvedValue(mockUser);
+      mockUserModel.findOne.mockReturnValue({ select: selectMock });
+      (bcrypt.compare as jest.Mock).mockResolvedValue(true);
+      mockJwtService.sign.mockReturnValue('signed.jwt.token');
+
+      const result = await service.login({
+        identifier: 'testuser',
+        password: 'plaintext_password',
+      });
+
+      expect(mockUserModel.findOne).toHaveBeenCalledWith({
+        $or: [{ email: 'testuser' }, { username: 'testuser' }],
+      });
+      expect(result).toEqual({ accessToken: 'signed.jwt.token' });
+    });
+
     it('should throw UnauthorizedException when user is not found', async () => {
       const selectMock = jest.fn().mockResolvedValue(null);
       mockUserModel.findOne.mockReturnValue({ select: selectMock });
 
       await expect(
-        service.login({ email: 'unknown@example.com', password: 'any_password' }),
+        service.login({ identifier: 'unknown@example.com', password: 'any_password' }),
       ).rejects.toThrow(new UnauthorizedException('Invalid credentials'));
 
       expect(mockJwtService.sign).not.toHaveBeenCalled();
@@ -81,7 +100,7 @@ describe('LoginService', () => {
       (bcrypt.compare as jest.Mock).mockResolvedValue(false);
 
       await expect(
-        service.login({ email: 'test@example.com', password: 'wrong_password' }),
+        service.login({ identifier: 'test@example.com', password: 'wrong_password' }),
       ).rejects.toThrow(new UnauthorizedException('Invalid credentials'));
 
       expect(mockJwtService.sign).not.toHaveBeenCalled();

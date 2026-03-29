@@ -14,9 +14,11 @@ export class LoginService {
   ) {}
 
   async login(dto: LoginDto) {
-    const { email, password } = dto;
+    const { identifier, password } = dto;
 
-    const user = await this.userModel.findOne({ email }).select('+password');
+    const user = await this.userModel
+      .findOne({ $or: [{ email: identifier }, { username: identifier }] })
+      .select('+password');
     if (!user) {
       throw new UnauthorizedException('Invalid credentials');
     }

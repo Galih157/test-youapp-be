@@ -4,6 +4,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { Types } from 'mongoose';
 import { ChineseZodiacYear } from '../../../models/chinese-zodiac-year.schema';
 import { Profile } from '../../../models/profile.schema';
+import { Gender } from '../../../enums/gender.enum';
 import { ProfileService } from './profile.service';
 
 const userId = '507f1f77bcf86cd799439011';
@@ -12,6 +13,7 @@ const mockProfile = {
   _id: 'profile-id-1',
   userId: new Types.ObjectId(userId),
   displayName: 'Test User',
+  gender: Gender.Male,
   height: 175,
   weight: 70,
   interests: [],
@@ -101,6 +103,18 @@ describe('ProfileService', () => {
       expect(mockProfileModel.findOne).toHaveBeenCalled();
       expect(mockProfileModel.create).toHaveBeenCalled();
       expect(result).toEqual(mockProfile);
+    });
+
+    it('should persist the gender enum value', async () => {
+      const profileWithGender = { ...mockProfile, gender: Gender.Female };
+      mockProfileModel.findOne.mockResolvedValue(null);
+      mockProfileModel.create.mockResolvedValue(profileWithGender);
+
+      const result = await service.createProfile(userId, { gender: Gender.Female });
+
+      const createArg = mockProfileModel.create.mock.calls[0][0];
+      expect(createArg.gender).toBe(Gender.Female);
+      expect(result.gender).toBe(Gender.Female);
     });
 
     it('should throw ConflictException if profile already exists', async () => {
