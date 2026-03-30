@@ -11,9 +11,7 @@ const mockProfileService = {
   updateProfile: jest.fn(),
 };
 
-const mockReq = {
-  user: { sub: '507f1f77bcf86cd799439011', email: 'test@example.com' },
-} as any;
+const mockUser = { sub: '507f1f77bcf86cd799439011', email: 'test@example.com' };
 
 describe('ProfileController', () => {
   let controller: ProfileController;
@@ -36,7 +34,7 @@ describe('ProfileController', () => {
       const dto = { displayName: 'Test User', height: 175, weight: 70 };
       const doc = {
         _id: 'profile-id',
-        userId: mockReq.user.sub,
+        userId: mockUser.sub,
         __v: 0,
         displayName: 'Test User',
         gender: Gender.Male,
@@ -49,9 +47,9 @@ describe('ProfileController', () => {
       };
       mockProfileService.createProfile.mockResolvedValue(doc);
 
-      const result = await controller.createProfile(mockReq, dto);
+      const result = await controller.createProfile(mockUser, dto);
 
-      expect(mockProfileService.createProfile).toHaveBeenCalledWith(mockReq.user.sub, dto);
+      expect(mockProfileService.createProfile).toHaveBeenCalledWith(mockUser.sub, dto);
       expect(result).toBeInstanceOf(ProfileViewModel);
       expect(result).toEqual(
         expect.objectContaining({
@@ -75,16 +73,16 @@ describe('ProfileController', () => {
     it('should return a ProfileViewModel mapped from the service result', async () => {
       const doc = {
         _id: 'profile-id',
-        userId: mockReq.user.sub,
+        userId: mockUser.sub,
         __v: 0,
         displayName: 'Test User',
         interests: [],
       };
       mockProfileService.getProfile.mockResolvedValue(doc);
 
-      const result = await controller.getProfile(mockReq);
+      const result = await controller.getProfile(mockUser);
 
-      expect(mockProfileService.getProfile).toHaveBeenCalledWith(mockReq.user.sub);
+      expect(mockProfileService.getProfile).toHaveBeenCalledWith(mockUser.sub);
       expect(result).toBeInstanceOf(ProfileViewModel);
       expect(result).toEqual(
         expect.objectContaining({ displayName: 'Test User', interests: [] }),
@@ -99,7 +97,7 @@ describe('ProfileController', () => {
       const dto = { displayName: 'Updated Name', height: 180 };
       const doc = {
         _id: 'profile-id',
-        userId: mockReq.user.sub,
+        userId: mockUser.sub,
         __v: 0,
         displayName: 'Updated Name',
         height: 180,
@@ -107,9 +105,9 @@ describe('ProfileController', () => {
       };
       mockProfileService.updateProfile.mockResolvedValue(doc);
 
-      const result = await controller.updateProfile(mockReq, dto);
+      const result = await controller.updateProfile(mockUser, dto);
 
-      expect(mockProfileService.updateProfile).toHaveBeenCalledWith(mockReq.user.sub, dto);
+      expect(mockProfileService.updateProfile).toHaveBeenCalledWith(mockUser.sub, dto);
       expect(result).toBeInstanceOf(ProfileViewModel);
       expect(result).toEqual(
         expect.objectContaining({ displayName: 'Updated Name', height: 180 }),

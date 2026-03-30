@@ -1,98 +1,244 @@
-<p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="120" alt="Nest Logo" /></a>
-</p>
+# YouApp Backend API
 
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
+A NestJS REST + WebSocket API for YouApp — handles user registration, authentication, profiles, and real-time chat.
 
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg" alt="Donate us"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow" alt="Follow us on Twitter"></a>
-</p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
+---
 
-## Description
+## Tech Stack
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
+- **NestJS** (TypeScript)
+- **MongoDB** via Mongoose
+- **Socket.IO** (WebSocket namespace `/chat`)
+- **JWT** authentication
+- **Docker / Docker Compose**
 
-## Project setup
+---
+
+## Getting Started
+
+### Prerequisites
+
+- Node.js 18+
+- MongoDB (local or via Docker)
+
+### Install dependencies
 
 ```bash
-$ npm install
+npm install
 ```
 
-## Compile and run the project
+### Environment variables
+
+Create a `.env` file in the project root (or export variables directly):
+
+```env
+PORT=3000
+APP_URL=http://localhost:3000
+JWT_SECRET=your-secret-here
+MONGODB_URI=mongodb://localhost:27017/youapp
+```
+
+### Run in development mode
 
 ```bash
-# development
-$ npm run start
+npm run start:dev
+```
+
+### Run with Docker Compose
+
+```bash
+docker compose up --build
+```
+
+The API will be available at `http://localhost:3000`.
+
+---
+
+## Running Tests
+
+```bash
+# all unit tests
+npm run test
+
+# unit tests with coverage
+npm run test:cov
 
 # watch mode
-$ npm run start:dev
-
-# production mode
-$ npm run start:prod
-```
-
-## Run tests
-
-```bash
-# unit tests
-$ npm run test
+npm run test:dev
 
 # e2e tests
-$ npm run test:e2e
-
-# test coverage
-$ npm run test:cov
+npm run test:e2e
 ```
 
-## Deployment
+---
 
-When you're ready to deploy your NestJS application to production, there are some key steps you can take to ensure it runs as efficiently as possible. Check out the [deployment documentation](https://docs.nestjs.com/deployment) for more information.
+## API Overview
 
-If you are looking for a cloud-based platform to deploy your NestJS application, check out [Mau](https://mau.nestjs.com), our official platform for deploying NestJS applications on AWS. Mau makes deployment straightforward and fast, requiring just a few simple steps:
+All responses are wrapped by the global `ResponseInterceptor`.
+All routes under `/api` require a valid JWT (`Authorization: Bearer <token>`).
 
-```bash
-$ npm install -g @nestjs/mau
-$ mau deploy
+| Method | Path | Auth | Description |
+|--------|------|------|-------------|
+| `POST` | `/register` | No | Create a new account |
+| `POST` | `/login` | No | Obtain a JWT token |
+| `POST` | `/api/createProfile` | Yes | Create a user profile |
+| `GET`  | `/api/getProfile` | Yes | Get the current user's profile |
+| `PUT`  | `/api/updateProfile` | Yes | Update the current user's profile |
+| `GET`  | `/api/viewMessages` | Yes | List all chat rooms for the current user |
+| `GET`  | `/api/viewMessages/:chatRoomId` | Yes | Get messages in a specific chat room |
+| `POST` | `/api/sendMessage` | Yes | Send a message (also broadcasts via WebSocket) |
+
+---
+
+## Chat System — Testing Guide
+
+The chat system has two layers:
+
+1. **HTTP (REST)** — persistence: `POST /api/sendMessage`
+2. **WebSocket** — real-time delivery: Socket.IO namespace `/chat`
+
+When a message is sent via HTTP, the server persists it and immediately emits a `newMessage` event to all connected clients in `chatRoom:<id>`.
+
+### Step 1 — Register two users
+
+Send the following request twice with different credentials:
+
+```
+POST http://localhost:3000/register
+Content-Type: application/json
+
+{
+  "email": "alice@example.com",
+  "username": "alice",
+  "password": "secret1",
+  "confirmPassword": "secret1"
+}
 ```
 
-With Mau, you can deploy your application in just a few clicks, allowing you to focus on building features rather than managing infrastructure.
+```
+POST http://localhost:3000/register
+Content-Type: application/json
 
-## Resources
+{
+  "email": "bob@example.com",
+  "username": "bob",
+  "password": "secret2",
+  "confirmPassword": "secret2"
+}
+```
 
-Check out a few resources that may come in handy when working with NestJS:
+### Step 2 — Log in as both users
 
-- Visit the [NestJS Documentation](https://docs.nestjs.com) to learn more about the framework.
-- For questions and support, please visit our [Discord channel](https://discord.gg/G7Qnnhy).
-- To dive deeper and get more hands-on experience, check out our official video [courses](https://courses.nestjs.com/).
-- Deploy your application to AWS with the help of [NestJS Mau](https://mau.nestjs.com) in just a few clicks.
-- Visualize your application graph and interact with the NestJS application in real-time using [NestJS Devtools](https://devtools.nestjs.com).
-- Need help with your project (part-time to full-time)? Check out our official [enterprise support](https://enterprise.nestjs.com).
-- To stay in the loop and get updates, follow us on [X](https://x.com/nestframework) and [LinkedIn](https://linkedin.com/company/nestjs).
-- Looking for a job, or have a job to offer? Check out our official [Jobs board](https://jobs.nestjs.com).
+```
+POST http://localhost:3000/login
+Content-Type: application/json
 
-## Support
+{
+  "identifier": "alice@example.com",
+  "password": "secret1"
+}
+```
 
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
+The response includes a `token` field. Save the token for Alice (`TOKEN_ALICE`) and repeat the login for Bob (`TOKEN_BOB`).
 
-## Stay in touch
+### Step 3 — Connect Bob to the WebSocket (listen for messages)
 
-- Author - [Kamil Myśliwiec](https://twitter.com/kammysliwiec)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
+In Postman, open a new **WebSocket** request:
+
+- **URL**: `ws://localhost:3000/chat`
+- Under **Headers**, add:
+  ```
+  Authorization: Bearer <TOKEN_BOB>
+  ```
+  > Alternatively, pass the token as `handshake.auth.token` via the connection options.
+
+Click **Connect**. Bob is now connected and listening.
+
+### Step 4 — Find Bob's user ID
+
+To send a message to Bob you need his MongoDB `_id`. You can find it in the login response (the `sub` field of the decoded JWT) or via the profile endpoint once a profile is created.
+
+### Step 5 — Alice sends a message via HTTP
+
+```
+POST http://localhost:3000/api/sendMessage
+Authorization: Bearer <TOKEN_ALICE>
+Content-Type: application/json
+
+{
+  "recipientId": "<BOB_USER_ID>",
+  "content": "Hey Bob, this is Alice!"
+}
+```
+
+The response contains the persisted `message` and the `chatRoom` object.
+Note the `chatRoom.id` — you will need it in the next step.
+
+### Step 6 — Bob joins the chat room (to receive future messages)
+
+In the Postman WebSocket tab connected as Bob, emit the `joinRoom` event:
+
+- **Event name**: `joinRoom`
+- **Message body**: `"<CHAT_ROOM_ID>"` (the ID from Step 5 as a plain JSON string)
+
+Bob's socket is now subscribed to `chatRoom:<id>` and will receive all future `newMessage` events for that room.
+
+> **Note for Postman**: Send the chatRoomId as a quoted JSON string, e.g. `"64abc123def456789abc1234"`. The server's `ParseWsBodyPipe` will handle decoding automatically.
+
+### Step 7 — Alice joins the same room
+
+Repeat Step 3 with Alice's token to open a second WebSocket tab as Alice, then emit `joinRoom` with the same `chatRoomId`.
+
+### Step 8 — Send another message and observe real-time delivery
+
+Alice sends another `POST /api/sendMessage` via HTTP. Both Alice's and Bob's WebSocket tabs should immediately receive a `newMessage` event with this payload shape:
+
+```json
+{
+  "message": {
+    "id": "...",
+    "chatRoomId": "...",
+    "senderId": "...",
+    "receiverId": "...",
+    "content": "Hey Bob, this is Alice!",
+    "createdAt": "..."
+  },
+  "chatRoom": {
+    "id": "...",
+    "participants": ["...", "..."],
+    "lastMessage": {},
+    "updatedAt": "..."
+  }
+}
+```
+
+### Step 9 — View chat history via HTTP
+
+List all chat rooms the current user participates in:
+
+```
+GET http://localhost:3000/api/viewMessages
+Authorization: Bearer <TOKEN_ALICE>
+```
+
+Get all messages in a specific room (returns `403 Forbidden` if the user is not a participant):
+
+```
+GET http://localhost:3000/api/viewMessages/\<CHAT_ROOM_ID\>
+Authorization: Bearer <TOKEN_ALICE>
+```
+
+---
+
+## Architecture Notes
+
+- **Gateway** (`ChatGateway`): handles WebSocket connection lifecycle (JWT auth on handshake), room joining (`joinRoom` event), and broadcasting `newMessage` events via `emitToRoom()`.
+- **Controller** (`ChatController`): handles HTTP persistence and triggers `emitToRoom()` after a successful save.
+- **Service** (`ChatService`): all database operations — `sendMessage`, `viewMessages`, `getMessagesInRoom`.
+- The gateway does **not** persist messages. Message persistence is exclusively an HTTP concern.
+
+---
 
 ## License
 
-Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
+MIT
