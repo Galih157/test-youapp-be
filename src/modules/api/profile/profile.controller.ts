@@ -16,6 +16,7 @@ import { JwtAuthGuard } from '../../../utils/jwt-auth.guard';
 import { plainToInstance } from 'class-transformer';
 import { CreateProfileDto } from './dto/create-profile.dto';
 import { UpdateProfileDto } from './dto/update-profile.dto';
+import { UpdateInterestsDto } from './dto/update-interests.dto';
 import { ProfileService } from './profile.service';
 import { ProfileViewModel } from './viewmodels/profile.viewmodel';
 
@@ -49,6 +50,15 @@ export class ProfileController {
     @Body() dto: UpdateProfileDto,
   ) {
     const profile = await this.profileService.updateProfile(req.user.sub, dto);
+    return plainToInstance(ProfileViewModel, profile);
+  }
+
+  @Put('updateInterests')
+  async updateInterests(
+    @Req() req: AuthenticatedRequest,
+    @Body() dto: UpdateInterestsDto,
+  ) {
+    const profile = await this.profileService.updateInterests(req.user.sub, dto);
     return plainToInstance(ProfileViewModel, profile);
   }
 

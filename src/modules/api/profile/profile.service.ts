@@ -16,6 +16,7 @@ import { Profile, ProfileDocument } from '../../../models/profile.schema';
 import { getHoroscope } from '../../../utils/astrology';
 import { CreateProfileDto } from './dto/create-profile.dto';
 import { UpdateProfileDto } from './dto/update-profile.dto';
+import { UpdateInterestsDto } from './dto/update-interests.dto';
 
 @Injectable()
 export class ProfileService {
@@ -80,6 +81,16 @@ export class ProfileService {
     const profile = await this.profileModel.findOneAndUpdate(
       { userId: new Types.ObjectId(userId) },
       { $set: updateData },
+      { new: true },
+    );
+    if (!profile) throw new NotFoundException('Profile not found');
+    return profile;
+  }
+
+  async updateInterests(userId: string, dto: UpdateInterestsDto) {
+    const profile = await this.profileModel.findOneAndUpdate(
+      { userId: new Types.ObjectId(userId) },
+      { $set: { interests: dto.interests } },
       { new: true },
     );
     if (!profile) throw new NotFoundException('Profile not found');
