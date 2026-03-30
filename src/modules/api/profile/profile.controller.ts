@@ -2,12 +2,16 @@ import {
   Body,
   Controller,
   Get,
+  HttpCode,
+  HttpStatus,
   Post,
   Put,
   Req,
+  UploadedFile,
   UseGuards,
 } from '@nestjs/common';
 import { Request } from 'express';
+import { AvatarUpload } from './decorators/avatar-upload.decorator';
 import { JwtAuthGuard } from '../../../utils/jwt-auth.guard';
 import { plainToInstance } from 'class-transformer';
 import { CreateProfileDto } from './dto/create-profile.dto';
@@ -46,5 +50,16 @@ export class ProfileController {
   ) {
     const profile = await this.profileService.updateProfile(req.user.sub, dto);
     return plainToInstance(ProfileViewModel, profile);
+  }
+
+  @Post('uploadAvatar')
+  @HttpCode(HttpStatus.OK)
+  @AvatarUpload()
+  async uploadAvatar(
+    @Req() req: AuthenticatedRequest,
+    @UploadedFile() file: Express.Multer.File,
+  ) {
+    const avatarUrl = await this.profileService.uploadAvatar(req.user.sub, file);
+    return { avatarUrl };
   }
 }

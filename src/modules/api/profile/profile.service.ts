@@ -1,8 +1,11 @@
 import {
   ConflictException,
   Injectable,
+  InternalServerErrorException,
   NotFoundException,
 } from '@nestjs/common';
+import * as fs from 'fs';
+import * as path from 'path';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import {
@@ -81,5 +84,37 @@ export class ProfileService {
     );
     if (!profile) throw new NotFoundException('Profile not found');
     return profile;
+  }
+
+  async uploadAvatar(userId: string, file: Express.Multer.File): Promise<string> {
+    const uploadsDir = path.join(process.cwd(), 'uploads', 'avatars');
+    if (!fs.existsSync(uploadsDir)) {
+      fs.mkdirSync(uploadsDir, { recursive: true });
+    }
+
+    const ext = path.extname(file.originalname).toLowerCase();
+    const filename = `${userId}${ext}`;
+    const filepath = path.join(uploadsDir, filename);
+
+    try {
+      fs.writeFileSync(filepath, file.buffer);
+    } catch {
+      throw new InternalServerErrorException('Failed to save avatar');
+    }
+
+    const avatarPath = `/uploads/avatars/${filename}`;
+
+    await this.profileModel.findOneAndUpdate(
+      { userId: new Types.ObjectId(userId) },
+      { $set: { avatar: avatarPath } },
+      { new: true },
+    );
+
+    return this.toAvatarUrl(avatarPath);
+  }
+
+  private toAvatarUrl(relativePath: string): string {
+    const base = (process.env.APP_URL ?? 'http://localhost:3000').replace(/\/$/, '');
+    return `${base}${relativePath}`;
   }
 }

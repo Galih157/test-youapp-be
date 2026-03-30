@@ -30,4 +30,13 @@ export class ProfileViewModel {
   @Expose()
   @Transform(({ value }: { value: string[] | undefined }) => value ?? [])
   interests: string[];
+
+  @Expose()
+  @Transform(({ obj }: { obj: { avatar?: string } }) => {
+    const value = obj.avatar;
+    const base = process.env.APP_URL ?? 'http://localhost:3000';
+
+    return `${base}${value}`;
+  })
+  avatarUrl?: string;
 }

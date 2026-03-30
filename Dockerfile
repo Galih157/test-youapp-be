@@ -19,7 +19,7 @@ COPY package.json package-lock.json ./
 COPY --from=build /app/dist ./dist
 RUN npm ci --omit=dev && npm cache clean --force \
   && addgroup -S appgroup && adduser -S appuser -G appgroup \
-  && chown -R appuser:appgroup /app
+  && mkdir -p /app/uploads && chown -R appuser:appgroup /app
 USER appuser
 EXPOSE 3000
 CMD ["node", "dist/main"]

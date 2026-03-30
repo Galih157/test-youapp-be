@@ -9,11 +9,14 @@ services:
       - "3000:3000"
     environment:
       PORT: ${PORT:-3000}
+      APP_URL: ${APP_URL:-http://localhost:3000}
       JWT_SECRET: ${JWT_SECRET:-change-me-in-production}
       MONGODB_URI: ${MONGODB_URI:-mongodb://mongodb:27017/test-youapp-be}
     depends_on:
       mongodb:
         condition: service_healthy
+    volumes:
+      - uploads-data:/app/uploads
 
   mongodb:
     image: docker.io/library/mongo:7
@@ -32,3 +35,4 @@ services:
 
 volumes:
   mongodb-data:
+  uploads-data:
